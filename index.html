@@ -1,0 +1,577 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Girl Days Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Dancing Script', cursive;
+    background: #f9b8c8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; min-height: 100vh; padding: 20px; position: relative; overflow: hidden; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* Floating hearts background */
+  .hearts { position: fixed; top: 0; left: 0; width: 100%; pointer-events: none; z-index: 0; }
+  .heart {
+    position: absolute;
+    font-size: 28px;
+    opacity: 0.35;
+    animation: floatHeart 6s ease-in-out infinite;
+    color: #e0607e;
+  }
+  @keyframes floatHeart {
+    0%, 100% { transform: translateY(0) rotate(-10deg); }
+    50% { transform: translateY(-18px) rotate(10deg); }
+  }
+
+  .content { position: relative; z-index: 1; width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
+
+  /* Title */
+  .title {
+    font-family: 'Great Vibes', cursive;
+    font-size: 2.6rem;
+    color: #d63f6b;
+    text-align: center;
+    margin: 30px 0 8px;
+    text-shadow: 1px 1px 3px rgba(255,255,255,0.5);
+  }
+
+  /* Divider */
+  .divider {
+    width: 80%;
+    height: 20px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20'%3E%3Cpath d='M0 10 Q50 2 100 10 Q150 18 200 10' stroke='%23c9a84c' fill='none' stroke-width='1.5'/%3E%3Ccircle cx='100' cy='10' r='4' fill='%23c9a84c'/%3E%3C/svg%3E") center/contain no-repeat;
+    margin: 6px 0 20px;
+  }
+
+  /* HOME SCREEN */
+  .today-label {
+    font-size: 1.1rem;
+    color: #d63f6b;
+    margin-top: 10px;
+  }
+  .today-date {
+    font-size: 2.8rem;
+    color: white;
+    font-weight: 700;
+    text-shadow: 2px 2px 6px rgba(214,63,107,0.3);
+    letter-spacing: 2px;
+    margin: 4px 0 28px;
+  }
+
+  .main-btn {
+    background: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 40px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.3rem;
+    color: #d63f6b;
+    cursor: pointer;
+    width: 80%;
+    text-align: left;
+    margin-bottom: 6px;
+    box-shadow: 0 2px 10px rgba(214,63,107,0.15);
+    transition: all 0.2s;
+  }
+  .main-btn:hover { background: #fce4ec; transform: scale(1.02); }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.25rem;
+    color: #d63f6b;
+    cursor: pointer;
+    padding: 6px 0;
+    width: 80%;
+    text-align: left;
+    margin: 4px 0;
+    transition: opacity 0.2s;
+  }
+  .nav-btn:hover { opacity: 0.7; }
+
+  /* CALENDAR SCREEN */
+  .back-btn {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1rem;
+    color: #555;
+    cursor: pointer;
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.5);
+  }
+  .back-btn:hover { background: white; }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 10px 0 4px;
+  }
+  .month-nav button {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #d63f6b;
+    font-weight: bold;
+  }
+  .month-name {
+    font-family: 'Great Vibes', cursive;
+    font-size: 2rem;
+    color: #222;
+  }
+
+  .cal-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .cal-day-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #555;
+    padding: 4px 0;
+    font-family: sans-serif;
+  }
+  .cal-day {
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: sans-serif;
+    font-weight: 600;
+    color: #333;
+    transition: background 0.15s;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .cal-day:hover { background: rgba(255,255,255,0.6); }
+  .cal-day.today { background: #d63f6b; color: white; border-radius: 50%; }
+  .cal-day.has-event::after {
+    content: '♥';
+    position: absolute;
+    bottom: 1px;
+    font-size: 0.45rem;
+    color: #d63f6b;
+  }
+  .cal-day.today.has-event::after { color: white; }
+  .cal-day.empty { cursor: default; }
+
+  .add-event-btn {
+    margin-top: 24px;
+    background: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 36px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.2rem;
+    color: #d63f6b;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(214,63,107,0.2);
+  }
+  .add-event-btn:hover { background: #fce4ec; }
+
+  /* EVENTS LIST */
+  .events-list { width: 100%; margin-top: 10px; }
+  .event-card {
+    background: rgba(255,255,255,0.75);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(214,63,107,0.1);
+  }
+  .event-card .ev-title { font-size: 1.1rem; color: #d63f6b; }
+  .event-card .ev-detail { font-size: 0.9rem; color: #666; font-family: sans-serif; }
+  .event-card .ev-delete {
+    float: right;
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .event-card .ev-delete:hover { color: #d63f6b; }
+
+  /* CREATE EVENT SCREEN */
+  .form-group { width: 100%; margin-bottom: 14px; }
+  .form-label {
+    font-size: 1.1rem;
+    color: #333;
+    display: block;
+    margin-bottom: 4px;
+    font-style: italic;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: none;
+    background: rgba(255,255,255,0.85);
+    font-family: 'Dancing Script', cursive;
+    font-size: 1rem;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(214,63,107,0.1);
+    outline: none;
+  }
+  .form-input:focus { box-shadow: 0 2px 12px rgba(214,63,107,0.3); }
+
+  .save-btn {
+    margin-top: 10px;
+    background: #d63f6b;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 48px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(214,63,107,0.35);
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: #c0345c; transform: scale(1.03); }
+
+  .reminder-btn {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.7);
+    color: #d63f6b;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 32px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #d63f6b;
+    color: white;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.1rem;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  .section-title {
+    font-size: 1.3rem;
+    color: #d63f6b;
+    align-self: flex-start;
+    margin: 16px 0 6px;
+  }
+  .no-events { color: #aaa; font-size: 1rem; font-family: sans-serif; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Floating Hearts -->
+<div class="hearts" id="hearts"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="screen-home">
+  <div class="content">
+    <div class="title">Girl Days Calendar</div>
+    <div class="divider"></div>
+    <div class="today-label">today's date:</div>
+    <div class="today-date" id="today-display"></div>
+    <button class="main-btn" onclick="showScreen('calendar')">› view your calendar</button>
+    <div class="divider"></div>
+    <button class="nav-btn" onclick="showScreen('create')">› create an event</button>
+    <div class="divider"></div>
+    <button class="nav-btn" onclick="showScreen('upcoming')">› view upcoming events</button>
+    <div class="divider"></div>
+    <button class="nav-btn" onclick="window.open('https://midevcodes.github.io/GirlyNotes/', '_blank')">› Girly Notes</button>
+    <div class="divider"></div>
+  </div>
+</div>
+
+<!-- CALENDAR SCREEN -->
+<div class="screen" id="screen-calendar">
+  <div class="content">
+    <button class="back-btn" onclick="showScreen('home')">← back</button>
+    <div class="title">Girl Days Calendar</div>
+    <div class="divider"></div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <div class="month-name" id="cal-month-name"></div>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <button class="add-event-btn" onclick="showScreen('create')">› add an event</button>
+  </div>
+</div>
+
+<!-- UPCOMING EVENTS SCREEN -->
+<div class="screen" id="screen-upcoming">
+  <div class="content">
+    <button class="back-btn" onclick="showScreen('home')">← back</button>
+    <div class="title">Girl Days Calendar</div>
+    <div class="divider"></div>
+    <div class="section-title">✨ upcoming events</div>
+    <div class="events-list" id="events-list"></div>
+  </div>
+</div>
+
+<!-- GIRLY NOTES SCREEN -->
+<div class="screen" id="screen-notes">
+  <div class="content">
+    <button class="back-btn" onclick="showScreen('home')">← back</button>
+    <div class="title">Girly Notes</div>
+    <div class="divider"></div>
+
+    <div class="form-group" style="width:100%">
+      <input class="form-input" type="text" id="note-title" placeholder="note title...">
+    </div>
+    <div class="form-group" style="width:100%">
+      <textarea class="form-input" id="note-body" rows="5" placeholder="write your thoughts here... 🌸" style="resize:none;line-height:1.6"></textarea>
+    </div>
+    <button class="save-btn" onclick="saveNote()">[ Save Note ] 💕</button>
+
+    <div class="section-title" style="margin-top:24px">✨ my notes</div>
+    <div class="events-list" id="notes-list"></div>
+  </div>
+</div>
+
+<!-- CREATE EVENT SCREEN -->
+<div class="screen" id="screen-create">
+  <div class="content">
+    <button class="back-btn" onclick="showScreen('home')">← back</button>
+    <div class="title">Girl Days Calendar</div>
+    <div class="divider"></div>
+
+    <div class="form-group">
+      <label class="form-label">(date):</label>
+      <input class="form-input" type="date" id="ev-date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">(event type):</label>
+      <input class="form-input" type="text" id="ev-type" placeholder="e.g. birthday, date, appointment">
+    </div>
+    <div class="form-group">
+      <label class="form-label">(time):</label>
+      <input class="form-input" type="time" id="ev-time">
+    </div>
+    <div class="form-group">
+      <label class="form-label">(place):</label>
+      <input class="form-input" type="text" id="ev-place" placeholder="e.g. coffee shop, home">
+    </div>
+    <div class="form-group">
+      <label class="form-label">(notes):</label>
+      <input class="form-input" type="text" id="ev-notes" placeholder="any extra details...">
+    </div>
+
+    <button class="reminder-btn">[ set reminder ] 🔔</button>
+    <button class="save-btn" onclick="saveEvent()">[ Save ] 💾</button>
+  </div>
+</div>
+
+<script>
+  // ---- Hearts ----
+  const heartContainer = document.getElementById('hearts');
+  for (let i = 0; i < 12; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.innerHTML = '♥';
+    h.style.left = Math.random() * 90 + '%';
+    h.style.top = Math.random() * 40 + '%';
+    h.style.fontSize = (16 + Math.random() * 24) + 'px';
+    h.style.animationDelay = (Math.random() * 4) + 's';
+    h.style.animationDuration = (4 + Math.random() * 4) + 's';
+    heartContainer.appendChild(h);
+  }
+
+  // ---- Today's date ----
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  document.getElementById('today-display').textContent = `${dd}/ ${mm}/ ${yyyy} ✨`;
+
+  // ---- Screen navigation ----
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    if (name === 'calendar') renderCalendar();
+    if (name === 'upcoming') renderUpcoming();
+
+  }
+
+  // ---- Events storage ----
+  let events = JSON.parse(localStorage.getItem('girlEvents') || '[]');
+
+  function saveEvent() {
+    const date = document.getElementById('ev-date').value;
+    const type = document.getElementById('ev-type').value.trim();
+    const time = document.getElementById('ev-time').value;
+    const place = document.getElementById('ev-place').value.trim();
+    const notes = document.getElementById('ev-notes').value.trim();
+
+    if (!date || !type) { showToast('Please fill in date & event type 💕'); return; }
+
+    events.push({ date, type, time, place, notes, id: Date.now() });
+    localStorage.setItem('girlEvents', JSON.stringify(events));
+
+    // Clear form
+    ['ev-date','ev-type','ev-time','ev-place','ev-notes'].forEach(id => document.getElementById(id).value = '');
+    showToast('Event saved! 🎀');
+    setTimeout(() => showScreen('upcoming'), 1200);
+  }
+
+  function deleteEvent(id) {
+    events = events.filter(e => e.id !== id);
+    localStorage.setItem('girlEvents', JSON.stringify(events));
+    renderUpcoming();
+  }
+
+  function renderUpcoming() {
+    const list = document.getElementById('events-list');
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = events.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date));
+    if (!upcoming.length) {
+      list.innerHTML = '<p class="no-events">No upcoming events yet 🌸</p>';
+      return;
+    }
+    list.innerHTML = upcoming.map(e => `
+      <div class="event-card">
+        <button class="ev-delete" onclick="deleteEvent(${e.id})">✕</button>
+        <div class="ev-title">♥ ${e.type}</div>
+        <div class="ev-detail">${formatDate(e.date)}${e.time ? ' · ' + formatTime(e.time) : ''}${e.place ? ' · ' + e.place : ''}</div>
+        ${e.notes ? `<div class="ev-detail" style="margin-top:4px;font-style:italic;">${e.notes}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // ---- Notes ----
+  let notes = JSON.parse(localStorage.getItem('girlNotes') || '[]');
+
+  function saveNote() {
+    const title = document.getElementById('note-title').value.trim();
+    const body = document.getElementById('note-body').value.trim();
+    if (!title && !body) { showToast('Write something first 💕'); return; }
+    notes.unshift({ title: title || 'Untitled', body, id: Date.now(), date: new Date().toLocaleDateString() });
+    localStorage.setItem('girlNotes', JSON.stringify(notes));
+    document.getElementById('note-title').value = '';
+    document.getElementById('note-body').value = '';
+    showToast('Note saved! 🎀');
+    renderNotes();
+  }
+
+  function deleteNote(id) {
+    notes = notes.filter(n => n.id !== id);
+    localStorage.setItem('girlNotes', JSON.stringify(notes));
+    renderNotes();
+  }
+
+  function renderNotes() {
+    const list = document.getElementById('notes-list');
+    if (!notes.length) { list.innerHTML = '<p class="no-events">No notes yet 🌸</p>'; return; }
+    list.innerHTML = notes.map(n => `
+      <div class="event-card">
+        <button class="ev-delete" onclick="deleteNote(${n.id})">✕</button>
+        <div class="ev-title">♥ ${n.title}</div>
+        <div class="ev-detail" style="font-size:0.8rem;margin-bottom:4px">${n.date}</div>
+        <div class="ev-detail" style="white-space:pre-wrap;font-family:sans-serif">${n.body}</div>
+      </div>
+    `).join('');
+  }
+
+  formatDate = function(d) {
+    const [y,m,day] = d.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${day} ${months[+m-1]} ${y}`;
+  }
+  function formatTime(t) {
+    const [h,m] = t.split(':');
+    const ampm = h >= 12 ? 'pm' : 'am';
+    return `${h % 12 || 12}:${m}${ampm}`;
+  }
+
+  // ---- Calendar ----
+  let calYear = now.getFullYear(), calMonth = now.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    document.getElementById('cal-month-name').textContent = monthNames[calMonth];
+    const grid = document.getElementById('cal-grid');
+    const days = ['S','M','T','W','T','F','S'];
+    let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const todayStr = `${yyyy}-${mm}-${String(calMonth+1).padStart(2,'0')}`;
+
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = dateStr === `${yyyy}-${mm}-${dd}`;
+      const hasEv = events.some(e => e.date === dateStr);
+      html += `<div class="cal-day ${isToday ? 'today' : ''} ${hasEv ? 'has-event' : ''}" onclick="dayClick('${dateStr}')">${d}</div>`;
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function dayClick(dateStr) {
+    const dayEvents = events.filter(e => e.date === dateStr);
+    if (dayEvents.length) {
+      showToast(`${dayEvents.length} event${dayEvents.length>1?'s':''} on this day 💕`);
+    } else {
+      document.getElementById('ev-date').value = dateStr;
+      showScreen('create');
+    }
+  }
+
+  // ---- Toast ----
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Init
+  renderCalendar();
+</script>
+</body>
+</html>
